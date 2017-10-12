@@ -471,8 +471,8 @@ static inline bool is_valid_ether_addr(const u8 *addr)
 //#define	mutex_unlock(x)
 
 // ammulder: this was from the Ethernet driver, TODO: change to the wireless iwl_drv or something?
-#define net_device iwl_drv
-#define netdev_priv(x)  ((struct iwl_drv *)x)
+// #define net_device iwl_drv
+// #define netdev_priv(x)  ((struct iwl_drv *)x)
 
 #define do_div(lat_ns, speed) \
 (lat_ns) = (UInt64)(lat_ns) / (speed)
