@@ -153,7 +153,7 @@ void __iwl_dbg(struct device *dev,
     va_start(args, fmt);
     vsnprintf(remainder, 178, fmt, args);
     va_end(args);
-    IOLog(buffer);
+    IOLog("%s", buffer);
 }
 
 void __iwl_info(struct device *dev, const char *fmt, ...) {
@@ -163,7 +163,7 @@ void __iwl_info(struct device *dev, const char *fmt, ...) {
     va_start(args, fmt);
     vsnprintf(remainder, 177, fmt, args);
     va_end(args);
-    IOLog(buffer);
+    IOLog("%s", buffer);
 }
 void __iwl_crit(struct device *dev, const char *fmt, ...) {
     char buffer[200] = "AppleIntelWiFiMVM CRIT ";
@@ -172,7 +172,7 @@ void __iwl_crit(struct device *dev, const char *fmt, ...) {
     va_start(args, fmt);
     vsnprintf(remainder, 177, fmt, args);
     va_end(args);
-    IOLog(buffer);
+    IOLog("%s", buffer);
 }
 void __iwl_warn(struct device *dev, const char *fmt, ...) {
     char buffer[200] = "AppleIntelWiFiMVM WARN ";
@@ -181,7 +181,7 @@ void __iwl_warn(struct device *dev, const char *fmt, ...) {
     va_start(args, fmt);
     vsnprintf(remainder, 177, fmt, args);
     va_end(args);
-    IOLog(buffer);
+    IOLog("%s", buffer);
 }
 void __iwl_err(struct device *dev, bool rfkill_prefix, bool trace_only, const char *fmt, ...) {
     char buffer[200];
@@ -191,5 +191,5 @@ void __iwl_err(struct device *dev, bool rfkill_prefix, bool trace_only, const ch
     va_start(args, fmt);
     vsnprintf(remainder, 177, fmt, args);
     va_end(args);
-    IOLog(buffer);
+    IOLog("%s", buffer);
 }

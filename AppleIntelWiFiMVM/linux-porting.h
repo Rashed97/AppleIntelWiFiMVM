@@ -116,7 +116,7 @@ static void porting_print_warning(char *fmt, ...) {
     va_start(args, fmt);
     vsnprintf(remainder, 176, fmt, args);
     va_end(args);
-    IOLog(buffer);
+    IOLog("%s", buffer);
 }
 
 /******************************************************************************/

@@ -67,7 +67,7 @@
 #include "iwl-trans.h"
 #include <sys/malloc.h>
 
-struct iwl_trans *iwl_trans_alloc(unsigned int priv_size,
+extern inline struct iwl_trans *iwl_trans_alloc(unsigned int priv_size,
 				  struct device *dev,
 				  const struct iwl_cfg *cfg,
 				  const struct iwl_trans_ops *ops,
@@ -114,7 +114,7 @@ struct iwl_trans *iwl_trans_alloc(unsigned int priv_size,
 #endif
 }
 
-void iwl_trans_free(struct iwl_trans *trans)
+extern inline void iwl_trans_free(struct iwl_trans *trans)
 {
 #if DISABLED_CODE // Don't use a zone/cache on OS X
 	kmem_cache_destroy(trans->dev_cmd_pool);

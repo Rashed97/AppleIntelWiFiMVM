@@ -1122,6 +1122,7 @@ struct iwl_trans *iwl_trans_alloc(unsigned int priv_size,
 				  const struct iwl_cfg *cfg,
 				  const struct iwl_trans_ops *ops,
 				  size_t dev_cmd_headroom);
+
 void iwl_trans_free(struct iwl_trans *trans);
 
 /*****************************************************

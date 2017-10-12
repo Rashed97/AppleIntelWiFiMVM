@@ -859,20 +859,20 @@ static int iwl_parse_tlv_firmware(struct iwl_drv *drv,
 			drv->fw.mvm_fw = true;
 			break;
 		case IWL_UCODE_TLV_SEC_WOWLAN:
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_SEC_WOWLAN\n", delta, tlv_type);
+                IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_SEC_WOWLAN\n", delta, tlv_type);
 			iwl_store_ucode_sec(pieces, tlv_data, IWL_UCODE_WOWLAN,
 					    tlv_len);
 			drv->fw.mvm_fw = true;
 			break;
 		case IWL_UCODE_TLV_DEF_CALIB:
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_DEF_CALIB\n", delta, tlv_type);
+                IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_DEF_CALIB\n", delta, tlv_type);
 			if (tlv_len != sizeof(struct iwl_tlv_calib_data))
 				goto invalid_tlv_len;
 			if (iwl_set_default_calib(drv, tlv_data))
 				goto tlv_error;
 			break;
 		case IWL_UCODE_TLV_PHY_SKU:
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_PHY_SKU\n", delta, tlv_type);
+                IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_PHY_SKU\n", delta, tlv_type);
 			if (tlv_len != sizeof(u32))
 				goto invalid_tlv_len;
 			drv->fw.phy_config = le32_to_cpup((__le32 *)tlv_data);
@@ -884,25 +884,25 @@ static int iwl_parse_tlv_firmware(struct iwl_drv *drv,
 						FW_PHY_CFG_RX_CHAIN_POS;
 			break;
 		 case IWL_UCODE_TLV_SECURE_SEC_RT:
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_SECURE_SEC_RT\n", delta, tlv_type);
+                IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_SECURE_SEC_RT\n", delta, tlv_type);
 			iwl_store_ucode_sec(pieces, tlv_data, IWL_UCODE_REGULAR,
 					    tlv_len);
 			drv->fw.mvm_fw = true;
 			break;
 		case IWL_UCODE_TLV_SECURE_SEC_INIT:
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_SECURE_SEC_INIT\n", delta, tlv_type);
+                IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_SECURE_SEC_INIT\n", delta, tlv_type);
 			iwl_store_ucode_sec(pieces, tlv_data, IWL_UCODE_INIT,
 					    tlv_len);
 			drv->fw.mvm_fw = true;
 			break;
 		case IWL_UCODE_TLV_SECURE_SEC_WOWLAN:
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_SECURE_SEC_WOWLAN\n", delta, tlv_type);
+                IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_SECURE_SEC_WOWLAN\n", delta, tlv_type);
 			iwl_store_ucode_sec(pieces, tlv_data, IWL_UCODE_WOWLAN,
 					    tlv_len);
 			drv->fw.mvm_fw = true;
 			break;
 		case IWL_UCODE_TLV_NUM_OF_CPU:
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_NUM_OF_CPU\n", delta, tlv_type);
+                IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_NUM_OF_CPU\n", delta, tlv_type);
 			if (tlv_len != sizeof(u32))
 				goto invalid_tlv_len;
 			num_of_cpus =
@@ -921,19 +921,19 @@ static int iwl_parse_tlv_firmware(struct iwl_drv *drv,
 			}
 			break;
 		case IWL_UCODE_TLV_CSCHEME:
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_CSCHEME\n", delta, tlv_type);
+                IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_CSCHEME\n", delta, tlv_type);
 			if (iwl_store_cscheme(&drv->fw, tlv_data, tlv_len))
 				goto invalid_tlv_len;
 			break;
 		case IWL_UCODE_TLV_N_SCAN_CHANNELS:
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_N_SCAN_CHANNELS\n", delta, tlv_type);
+                IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_N_SCAN_CHANNELS\n", delta, tlv_type);
 			if (tlv_len != sizeof(u32))
 				goto invalid_tlv_len;
 			capa->n_scan_channels =
 				le32_to_cpup((__le32 *)tlv_data);
 			break;
 		case IWL_UCODE_TLV_FW_VERSION: {
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_FW_VERSION\n", delta, tlv_type);
+            IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_FW_VERSION\n", delta, tlv_type);
 			__le32 *ptr = (void *)tlv_data;
 			u32 major, minor;
 			u8 local_comp;
@@ -951,7 +951,7 @@ static int iwl_parse_tlv_firmware(struct iwl_drv *drv,
 			break;
 			}
 		case IWL_UCODE_TLV_FW_DBG_DEST: {
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_FW_DBG_DEST\n", delta, tlv_type);
+            IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_FW_DBG_DEST\n", delta, tlv_type);
 			struct iwl_fw_dbg_dest_tlv *dest = (void *)tlv_data;
 
 			if (pieces->dbg_dest_tlv) {
@@ -1008,7 +1008,7 @@ static int iwl_parse_tlv_firmware(struct iwl_drv *drv,
 			break;
 			}
 		case IWL_UCODE_TLV_FW_DBG_TRIGGER: {
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_FW_DBG_TRIGGER\n", delta, tlv_type);
+            IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_FW_DBG_TRIGGER\n", delta, tlv_type);
 			struct iwl_fw_dbg_trigger_tlv *trigger =
 				(void *)tlv_data;
 			u32 trigger_id = le32_to_cpu(trigger->id);
@@ -1034,14 +1034,14 @@ static int iwl_parse_tlv_firmware(struct iwl_drv *drv,
 			break;
 			}
 		case IWL_UCODE_TLV_SEC_RT_USNIFFER:
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_SEC_RT_USNIFFER\n", delta, tlv_type);
+                IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_SEC_RT_USNIFFER\n", delta, tlv_type);
 			usniffer_images = true;
 			iwl_store_ucode_sec(pieces, tlv_data,
 					    IWL_UCODE_REGULAR_USNIFFER,
 					    tlv_len);
 			break;
 		case IWL_UCODE_TLV_PAGING:
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_PAGING\n", delta, tlv_type);
+                IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_PAGING\n", delta, tlv_type);
 			if (tlv_len != sizeof(u32))
 				goto invalid_tlv_len;
 			paging_mem_size = le32_to_cpup((__le32 *)tlv_data);
@@ -1071,20 +1071,20 @@ static int iwl_parse_tlv_firmware(struct iwl_drv *drv,
 				paging_mem_size;
 			break;
 		case IWL_UCODE_TLV_SDIO_ADMA_ADDR:
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_SDIO_ADMA_ADDR\n", delta, tlv_type);
+                IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_SDIO_ADMA_ADDR\n", delta, tlv_type);
 			if (tlv_len != sizeof(u32))
 				goto invalid_tlv_len;
 			drv->fw.sdio_adma_addr =
 				le32_to_cpup((__le32 *)tlv_data);
 			break;
 		case IWL_UCODE_TLV_FW_GSCAN_CAPA:
-            IWL_DEBUG_INFO(drv, "0x%08x 0x%02x IWL_UCODE_TLV_FW_GSCAN_CAPA\n", delta, tlv_type);
+                IWL_DEBUG_INFO(drv, "0x%08zx 0x%02x IWL_UCODE_TLV_FW_GSCAN_CAPA\n", delta, tlv_type);
 			if (iwl_store_gscan_capa(&drv->fw, tlv_data, tlv_len))
 				goto invalid_tlv_len;
 			gscan_capa = true;
 			break;
 		default:
-			IWL_DEBUG_INFO(drv, "0x%08x unknown TLV: %d\n", delta, tlv_type);
+                IWL_DEBUG_INFO(drv, "0x%08zx unknown TLV: %d\n", delta, tlv_type);
 			break;
 		}
 	}

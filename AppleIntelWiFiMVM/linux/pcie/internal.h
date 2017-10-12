@@ -149,7 +149,7 @@ struct iwl_rb_allocator {
 	struct list_head rbd_empty;
 	spinlock_t lock;
 	struct workqueue_struct *alloc_wq;
-	struct work_struct rx_alloc;
+	struct work_struct *rx_alloc;
 };
 
 struct iwl_dma_ptr {
@@ -274,7 +274,7 @@ struct iwl_txq {
 	struct iwl_pcie_txq_entry *entries;
 	spinlock_t lock;
 	unsigned long frozen_expiry_remainder;
-	struct timer_list stuck_timer;
+	struct timer_list *stuck_timer;
 	struct iwl_trans_pcie *trans_pcie;
 	bool need_update;
 	bool frozen;
