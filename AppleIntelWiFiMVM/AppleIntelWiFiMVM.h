@@ -42,5 +42,5 @@ private:
 };
 
 #define MYNAME "AppleIntelWiFiMVM"
-#define DEBUGLOG(args...) kprintf("%s: %s" ,MYNAME, args); IOLog(args)
+#define DEBUGLOG(args...) IOLog("%s::%s",MYNAME, args); kprintf("%s::%s" ,MYNAME, args)
 #define	RELEASE(x)	if(x){(x)->release();(x)=NULL;}
