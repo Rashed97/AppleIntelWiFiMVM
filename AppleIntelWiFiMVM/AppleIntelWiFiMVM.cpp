@@ -8,7 +8,7 @@ extern "C" {
 #include "internal.h"
 }
 
-#define AlwaysLog(args...) do {IOLog(MYNAME": " args);}while(0)
+#define AlwaysLog(args...) do {IOLog(MYNAME": " args); IOSleep(1000);}while(0)
 
 #define super IOService
 OSDefineMetaClassAndStructors(AppleIntelWiFiMVM, IOService);
@@ -49,13 +49,14 @@ bool AppleIntelWiFiMVM::start(IOService* provider) {
         AlwaysLog("Super start failed\n");
         return false;
     }
-
+    IOSleep(2500);
     // Ensure we have a PCI device provider
     pciDevice = OSDynamicCast(IOPCIDevice, provider);
     if(!pciDevice) {
         kprintf("%s::Provider not a PCIDevice\n",MYNAME);
         IOLog("Provider not a PCIDevice\n");
-        goto failBeforePCIe;
+        shutdownFreePCIeTransport(pcieTransport);
+        return false;
     }
     pciDevice->retain();
 
@@ -64,59 +65,85 @@ bool AppleIntelWiFiMVM::start(IOService* provider) {
     if(!card) {
         kprintf("%s::Unable to find or configure WiFi hardware.\n",MYNAME);
         AlwaysLog("Unable to find or configure WiFi hardware.\n");
-        goto failBeforePCIe;
+        return false;
     }
     kprintf("%s::Loading for device %s\n",MYNAME, card->name);
     AlwaysLog("loading for device %s\n", card->name);
-
+    IOSleep(2500);
     // Startup Process: 2
+    AlwaysLog("Starting up process 2");
     pcieTransport = startupCreatePCIeTransport(card);
+    AlwaysLog("Initialized PCIe Transport");
+    IOSleep(2500);
     if(!pcieTransport) {
         kprintf("%s::Unable to initialize PCIe transport.\n",MYNAME);
         AlwaysLog("Unable to initialize PCIe transport.\n");
-        goto failBeforePCIe;
+        return false;
     }
-
+    IOSleep(2500);
     // Startup Process: 3
+    AlwaysLog("Starting up process 3");
     if(!startupCreateDriver(card, pcieTransport)) {
         kprintf("%s::Unable to initialize driver.\n",MYNAME);
         AlwaysLog("Unable to initialize driver.\n");
-        goto failAfterPCIe;
+        shutdownFreeDriver();
+        return false;
     }
-
+    IOSleep(2500);
+    AlwaysLog("Creating IOLockAllocs");
     // Create locks for synchronization TODO: move me
     firmwareLoadLock = IOLockAlloc();
     if (!firmwareLoadLock) {
         kprintf("%s::Unable to allocate firmware load lock.\n",MYNAME);
         AlwaysLog("Unable to allocate firmware load lock\n");
-        goto failAfterDriver;
+        shutdownFreeDriver();
+        return false;
     }
-
+    IOSleep(2500);
+    AlwaysLog("Startup process 4");
     // Startup Process: 4
     if(!startupLoadFirmware()) {
         kprintf("%s::Unable to load firmware.\n",MYNAME);
         AlwaysLog("Unable to load firmware.\n");
-        goto failAfterDriver;
+        shutdownFreeDriver();
+        return false;
     }
 
+    if(driver){
+        kprintf("%s::Loading Intel Firmware named %s", MYNAME, driver->firmware_name);
+        
+        AlwaysLog("Loading Intel Firmware named %s", driver->firmware_name);
+        
+        setProperty("WiFi card name", OSString::withCString(card->name));
+        setProperty("Intel Firmware version", driver->fw.fw_version);
+    }else{
+        AlwaysLog("WARNING! if(driver) equals false!");
+    }
+    
+    
+    IOSleep(2500);
+    AlwaysLog("Registering service");
 //    pciDevice->setMemoryEnable(true);
     registerService();
 
-    
+    IOSleep(2500);
+    AlwaysLog("Done starting up!");
     
     return true;
 
-failAfterDriver:
+/*failAfterDriver:
     shutdownFreeDriver();
 failAfterPCIe:
     shutdownFreePCIeTransport(pcieTransport);
 failBeforePCIe:
     return false;
+ */
 }
+
 
 void AppleIntelWiFiMVM::stop(IOService* provider) {
     kprintf("%s::stop\n",MYNAME);
-    DEBUGLOG("stop\n");
+    AlwaysLog("stop\n");
     shutdownStopFirmware();
     if (firmwareLoadLock)
     {
@@ -131,7 +158,7 @@ void AppleIntelWiFiMVM::stop(IOService* provider) {
 
 void AppleIntelWiFiMVM::free() {
     kprintf("%s::free\n",MYNAME);
-    DEBUGLOG("free\n");
+    AlwaysLog("free\n");
     RELEASE(pciDevice);
     struct iwl_trans *trans = shutdownFreeDriver();
     shutdownFreePCIeTransport(trans);
@@ -418,18 +445,21 @@ bool AppleIntelWiFiMVM::startupCreateDriver(const struct iwl_cfg *cfg, struct iw
         AlwaysLog("Could not allocate memory for the driver!");
         return false;
     }
-
+    AlwaysLog("Allocated memory for driver");
     driver->trans = trans;
     if(trans)
         driver->dev = trans->dev;
     driver->cfg = cfg;
 
+    AlwaysLog("Allocated struct properties");
 #if DISABLED_CODE // TODO: need to initialize the request_firmware_complete
+    AlwaysLog("Initialize the request_firmware_complete (???)");
     init_completion(&drv->request_firmware_complete);
     INIT_LIST_HEAD(&drv->list);
 #endif
-
+    
 #ifdef CONFIG_IWLWIFI_DEBUGFS
+    AlwaysLog("Creating debug entries");
     /* Create the device debugfs entries. */
     drv->dbgfs_drv = debugfs_create_dir(dev_name(trans->dev),
                                         iwl_dbgfs_root);
@@ -449,20 +479,6 @@ bool AppleIntelWiFiMVM::startupCreateDriver(const struct iwl_cfg *cfg, struct iw
         goto err_free_dbgfs;
     }
 #endif
-
-    kprintf("%s::Loading Intel Firmware version %6s, named %s", MYNAME, driver->fw.fw_version,driver->firmware_name);
-    AlwaysLog("Loading Intel Firmware version %6s, named %s", driver->fw.fw_version,driver->firmware_name);
-    
-    OSDictionary *firmwareInfo = new OSDictionary();
-    
-    
-    firmwareInfo->withCapacity(5);
-    
-    firmwareInfo->setObject("Firmware", OSString::withCString((driver->fw.fw_version)));
-    firmwareInfo->setObject("Firmware name", OSString::withCString(driver->firmware_name));
-    
-    setProperty("Intel Firmware" ,firmwareInfo);
-    
     
     return true;
 }
