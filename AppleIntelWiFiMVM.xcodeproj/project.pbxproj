@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1B01DF201F87CE0900BEE803 /* iwl-trans.c in Sources */ = {isa = PBXBuildFile; fileRef = A2FCD6A1DFE667C210CF826C /* iwl-trans.c */; };
+		1B035B881F9A70B200806B75 /* completion.h in Headers */ = {isa = PBXBuildFile; fileRef = 1B035B871F9A70B200806B75 /* completion.h */; };
 		1B0B3A901F9A17E80088B9AC /* iwlwifi-3160-17.ucode in Resources */ = {isa = PBXBuildFile; fileRef = 1B0B3A891F9A17E80088B9AC /* iwlwifi-3160-17.ucode */; };
 		1B0B3A911F9A17E80088B9AC /* iwlwifi-7260-17.ucode in Resources */ = {isa = PBXBuildFile; fileRef = 1B0B3A8A1F9A17E80088B9AC /* iwlwifi-7260-17.ucode */; };
 		1B0B3A921F9A17E80088B9AC /* iwlwifi-8265-22.ucode in Resources */ = {isa = PBXBuildFile; fileRef = 1B0B3A8B1F9A17E80088B9AC /* iwlwifi-8265-22.ucode */; };
@@ -93,6 +94,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1B035B871F9A70B200806B75 /* completion.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = completion.h; path = linux/completion.h; sourceTree = "<group>"; };
 		1B0B3A891F9A17E80088B9AC /* iwlwifi-3160-17.ucode */ = {isa = PBXFileReference; lastKnownFileType = file; name = "iwlwifi-3160-17.ucode"; path = "firmware/iwlwifi-3160-17.ucode"; sourceTree = "<group>"; };
 		1B0B3A8A1F9A17E80088B9AC /* iwlwifi-7260-17.ucode */ = {isa = PBXFileReference; lastKnownFileType = file; name = "iwlwifi-7260-17.ucode"; path = "firmware/iwlwifi-7260-17.ucode"; sourceTree = "<group>"; };
 		1B0B3A8B1F9A17E80088B9AC /* iwlwifi-8265-22.ucode */ = {isa = PBXFileReference; lastKnownFileType = file; name = "iwlwifi-8265-22.ucode"; path = "firmware/iwlwifi-8265-22.ucode"; sourceTree = "<group>"; };
@@ -235,6 +237,7 @@
 		846A8A641C6CB54700888583 /* linux */ = {
 			isa = PBXGroup;
 			children = (
+				1B035B871F9A70B200806B75 /* completion.h */,
 				843096651C70EA6C0020E454 /* iwl-fw-error-dump.h */,
 				84EF564D1C6D943E00C97EDD /* iwl-7000.h */,
 				84EF56511C6D95C300C97EDD /* iwl-8000.h */,
@@ -441,6 +444,7 @@
 				A2FCD4AC6A25585592B2C8CC /* iwl-debug.h in Headers */,
 				A2FCD8C7310AD04B4CC6524C /* iwl-devtrace-data.h in Headers */,
 				A2FCD2056A42765715D3F9D4 /* iwl-devtrace-io.h in Headers */,
+				1B035B881F9A70B200806B75 /* completion.h in Headers */,
 				A2FCD98F4752FAEABD92B5CE /* iwl-devtrace-iwlwifi.h in Headers */,
 				A2FCDBAE151E331A3370495C /* iwl-devtrace-msg.h in Headers */,
 				A2FCDFAE99E99DA74FAE7CC4 /* iwl-devtrace-ucode.h in Headers */,

@@ -90,7 +90,7 @@
  ******************************************************************************/
 
 #if DISABLED_CODE
-#define DRV_DESCRIPTION	"Intel(R) Wireless WiFi driver for Linux"
+#define DRV_DESCRIPTION	"Intel(R) Wireless WiFi driver for MacOS"
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
 MODULE_AUTHOR(DRV_COPYRIGHT " " DRV_AUTHOR);
 MODULE_LICENSE("GPL");
@@ -144,9 +144,9 @@ static IOLock* iwlwifi_opmode_table_mtx;
 static struct iwlwifi_opmode_table {
 	const char *name;			/* name: iwldvm, iwlmvm, etc */
 	const struct iwl_op_mode_ops *ops;	/* pointer to op_mode ops */
-#if DISABLED_CODE // Assuming only one for now
+//#if DISABLED_CODE // Assuming only one for now
 	struct list_head drv;		/* list of devices using this op_mode */
-#endif
+//b#endif
 } iwlwifi_opmode_table[2] = {		/* ops set when driver is initialized */
 	[DVM_OP_MODE] = { .name = "iwldvm", .ops = NULL },
 	[MVM_OP_MODE] = { .name = "iwlmvm", .ops = NULL },
@@ -1451,9 +1451,9 @@ bool iwl_req_fw_callback(void *raw, size_t len, void *context)
 	    IWL_MAX_PHY_CALIBRATE_TBL_SIZE)
 		fw->ucode_capa.standard_phy_calibration_size =
 			IWL_MAX_STANDARD_PHY_CALIBRATE_TBL_SIZE;
-#if DISABLED_CODE // TODO: Some of this will need to come back
+//#if DISABLED_CODE // TODO: Some of this will need to come back
 	/* We have our copies now, allow OS release its copies */
-	release_firmware(ucode_raw);
+	release_firmware(raw);
 
 	mutex_lock(&iwlwifi_opmode_table_mtx);
 	if (fw->mvm_fw)
@@ -1500,7 +1500,7 @@ bool iwl_req_fw_callback(void *raw, size_t len, void *context)
 				op->name, err);
 #endif
 	}
-#endif // DISABLED_CODE
+//#endif // DISABLED_CODE
     FREE(pieces, M_TEMP);
 	return true;
 

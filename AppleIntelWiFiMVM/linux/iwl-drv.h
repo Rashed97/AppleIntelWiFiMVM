@@ -67,6 +67,7 @@
 #if DISABLED_CODE
 #include <linux/export.h>
 #endif
+#include "completion.h"
 #include "iwl-fw.h"
 #include "iwl-fw-file.h"
 
@@ -86,9 +87,9 @@ bool iwl_req_fw_callback(void *raw, size_t len, void *context);
  * @request_firmware_complete: the firmware has been obtained from user space
  */
 struct iwl_drv {
-#if DISABLED_CODE
+//#if DISABLED_CODE
     struct list_head list;
-#endif // DISABLED_CODE
+//#endif // DISABLED_CODE
     struct iwl_fw fw;
 
     struct iwl_op_mode *op_mode;
@@ -99,9 +100,9 @@ struct iwl_drv {
     int fw_index;                   /* firmware we're trying to load */
     char firmware_name[32];         /* name of firmware file to load */
 
-#if DISABLED_CODE
+//#if DISABLED_CODE
     struct completion request_firmware_complete;
-#endif // DISABLED_CODE
+//#endif // DISABLED_CODE
 
 #ifdef CONFIG_IWLWIFI_DEBUGFS
     struct dentry *dbgfs_drv;
