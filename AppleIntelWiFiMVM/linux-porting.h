@@ -23,6 +23,16 @@
 #include "headers/errno.h"
 #include <sys/malloc.h>
 
+#define LIST_HEAD_INIT(name) { &(name), &(name) }
+
+#undef LIST_HEAD
+#define LIST_HEAD(name) \
+struct list_head name = LIST_HEAD_INIT(name)
+
+#define INIT_LIST_HEAD(ptr) do { \
+(ptr)->next = (ptr); (ptr)->prev = (ptr); \
+} while (0)
+
 // ammulder: compiler directives from the Linux sources (e.g. linux/compiler.h, linux/compiler-gcc.h)
 #define __packed                __attribute__((packed))
 #define __aligned(x)            __attribute__((aligned(x)))

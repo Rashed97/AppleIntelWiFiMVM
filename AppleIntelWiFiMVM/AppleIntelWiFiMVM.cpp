@@ -122,10 +122,17 @@ bool AppleIntelWiFiMVM::start(IOService* provider) {
     
     
     IOSleep(2500);
-    AlwaysLog("Registering service");
-//    pciDevice->setMemoryEnable(true);
+    
     registerService();
 
+    // Startup Process: 5
+    AlwaysLog("Startup process 5");
+    if(!startupHardware(pciDevice, pcieTransport)){
+        AlwaysLog("Error while enabling hardware!");
+        shutdownFreeDriver();
+        return false;
+    }
+    
     IOSleep(2500);
     AlwaysLog("Done starting up!");
     
@@ -139,7 +146,6 @@ failBeforePCIe:
     return false;
  */
 }
-
 
 void AppleIntelWiFiMVM::stop(IOService* provider) {
     kprintf("%s::stop\n",MYNAME);
@@ -225,18 +231,17 @@ const struct iwl_cfg *AppleIntelWiFiMVM::startupIdentifyWiFiCard() {
         return NULL;
     }
     
-    
     return result;
 }
 
-struct iwl_trans *allocatePCIeTransport(const struct iwl_cfg *cfg);
+struct iwl_trans *allocatePCIeTransport(const struct iwl_cfg *cfg, IOPCIDevice *pciDevice);
 
 struct iwl_trans *AppleIntelWiFiMVM::startupCreatePCIeTransport(const struct iwl_cfg *cfg) {
     const struct iwl_cfg *cfg_7265d __maybe_unused = NULL;
     struct iwl_trans *iwl_trans;
 
     // STEP 1: configure the PCIe Transport
-    iwl_trans = allocatePCIeTransport(cfg);
+    iwl_trans = allocatePCIeTransport(cfg, pciDevice);
     if(!iwl_trans) return NULL;
 
     // STEP 2: double-check the configuration data based on the hardware revision in the PCIe Transport
@@ -257,12 +262,11 @@ struct iwl_trans *AppleIntelWiFiMVM::startupCreatePCIeTransport(const struct iwl
             (iwl_trans->hw_rev & CSR_HW_REV_TYPE_MSK) == CSR_HW_REV_TYPE_7265D) {
         iwl_trans->cfg = cfg_7265d;
     }
-
+    
     return iwl_trans;
 }
 
-
-struct iwl_trans *allocatePCIeTransport(const struct iwl_cfg *cfg) {
+struct iwl_trans *allocatePCIeTransport(const struct iwl_cfg *cfg, IOPCIDevice *pciDevice) {
     // From pcie/trans.c iwl_pcie_trans_alloc
     struct iwl_trans_pcie *trans_pcie = NULL;
     struct iwl_trans *trans = NULL;
@@ -274,10 +278,13 @@ struct iwl_trans *allocatePCIeTransport(const struct iwl_cfg *cfg) {
         return (struct iwl_trans *) ERR_PTR(-ENOMEM);
 
     trans->max_skb_frags = IWL_PCIE_MAX_FRAGS;
-
+    trans->hw_id = pciDevice->configRead16(kIOPCIConfigDeviceID);
+    trans->hw_rev = pciDevice->configRead16(kIOPCIConfigRevisionID);
+    
     trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
     trans_pcie->trans = trans;
+    
 #if DISABLED_CODE
     spin_lock_init(&trans_pcie->irq_lock);
     spin_lock_init(&trans_pcie->reg_lock);
@@ -461,24 +468,78 @@ bool AppleIntelWiFiMVM::startupCreateDriver(const struct iwl_cfg *cfg, struct iw
 #ifdef CONFIG_IWLWIFI_DEBUGFS
     AlwaysLog("Creating debug entries");
     /* Create the device debugfs entries. */
-    drv->dbgfs_drv = debugfs_create_dir(dev_name(trans->dev),
+    driver->dbgfs_drv = debugfs_create_dir(dev_name(trans->dev),
                                         iwl_dbgfs_root);
 
-    if (!drv->dbgfs_drv) {
-        IWL_ERR(drv, "failed to create debugfs directory\n");
+    if (!driver->dbgfs_drv) {
+        IWL_ERR(driver, "failed to create debugfs directory\n");
         ret = -ENOMEM;
         goto err_free_drv;
     }
 
     /* Create transport layer debugfs dir */
-    drv->trans->dbgfs_dir = debugfs_create_dir("trans", drv->dbgfs_drv);
+    driver->trans->dbgfs_dir = debugfs_create_dir("trans", driver->dbgfs_drv);
 
-    if (!drv->trans->dbgfs_dir) {
-        IWL_ERR(drv, "failed to create transport debugfs directory\n");
+    if (!driver->trans->dbgfs_dir) {
+        IWL_ERR(driver, "failed to create transport debugfs directory\n");
         ret = -ENOMEM;
         goto err_free_dbgfs;
     }
 #endif
+    
+    return true;
+}
+
+
+#define PCI_COMMAND 0x04
+#define PCI_CFG_RETRY_TIMEOUT 0x41
+#define PCI_COMMAND_INTX_DISABLE 0x400
+
+bool AppleIntelWiFiMVM::startupHardware(IOPCIDevice *pciDevice, iwl_trans *trans){
+    
+    pciDevice->setMemoryEnable(true);
+    
+    // Construct a 36-Bit DMA
+    
+    IOBufferMemoryDescriptor *bmd = IOBufferMemoryDescriptor::inTaskWithPhysicalMask(kernel_task, kIOMemoryPhysicallyContiguous,256*1024, 0x00000000FFFFF000ULL);
+    
+    if(bmd != NULL){
+        generateDMAAddresses(bmd);
+    }else{
+        AlwaysLog("IOBufferMemoryDescriptor::inTaskWithPhysicalMask failed\n");
+    }
+    
+    fLowMemory = bmd;
+    
+    if(pciDevice->setBusMasterEnable(true)){
+        AlwaysLog("Enabled Bus Master!");
+    }else{
+        return false;
+    }
+    if(pciDevice->hasPCIPowerManagement()){
+        AlwaysLog("Found PCIPower management, enabling");
+        if(pciDevice->enablePCIPowerManagement() == kIOReturnSuccess){
+            AlwaysLog("Enabled pci power management");
+        }
+    }
+    if(pciDevice->setIOEnable((true))){
+        AlwaysLog("Was previously enabled");
+    }
+    
+    /* We disable the RETRY_TIMEOUT register (0x41) to keep
+     * PCI Tx retries from interfering with C3 CPU state */
+    //pci_write_config_byte(pdev, PCI_CFG_RETRY_TIMEOUT, 0x00);
+    pciDevice->configWrite8(PCI_CFG_RETRY_TIMEOUT, 0x00);
+    
+    /* enable rfkill interrupt: hw bug w/a */
+    //pci_read_config_word(pdev, PCI_COMMAND, &pci_cmd);
+    // PCI_COMMAND (0x04)
+    u16 pci_cmd;
+    pci_cmd = pciDevice->configRead16(PCI_COMMAND);
+    if (pci_cmd & PCI_COMMAND_INTX_DISABLE) {
+        pci_cmd &= ~PCI_COMMAND_INTX_DISABLE;
+        pciDevice->configWrite16(PCI_COMMAND, pci_cmd);
+    }
     
     return true;
 }
@@ -519,4 +580,263 @@ void AppleIntelWiFiMVM::shutdownFreePCIeTransport(struct iwl_trans *trans) {
     iwl_pcie_free_fw_monitor(trans);
 #endif
     iwl_trans_free(trans);
+}
+
+IOReturn AppleIntelWiFiMVM::generateDMAAddresses(IOMemoryDescriptor* memDesc)
+
+{
+    
+    // Get the physical segment list. These could be used to generate a scatter gather
+    
+    // list for hardware.
+    
+    
+    
+    IODMACommand*       cmd;
+    
+    IOReturn            err = kIOReturnSuccess;
+    
+    
+    
+    // 64 bit physical address generation using IODMACommand
+    
+    do
+        
+    {
+        
+        cmd = IODMACommand::withSpecification(
+                                              
+                                              // outSegFunc - Host endian since we read the address data with the cpu
+                                              
+                                              // and 64 bit wide quantities
+                                              
+                                              kIODMACommandOutputHost64,
+                                              
+                                              // numAddressBits
+                                              
+                                              64,
+                                              
+                                              // maxSegmentSize - zero for unrestricted physically contiguous chunks
+                                              
+                                              0,
+                                              
+                                              // mappingOptions - kMapped for DMA addresses
+                                              
+                                              IODMACommand::kMapped,
+                                              
+                                              // maxTransferSize - no restriction
+                                              
+                                              0,
+                                              
+                                              // alignment - no restriction
+                                              
+                                              1 );
+        
+        if (cmd == NULL) {
+            
+            IOLog("IODMACommand::withSpecification failed\n");
+            
+            break;
+            
+        }
+        
+        
+        
+        // Point at the memory descriptor and use the auto prepare option
+        
+        // to prepare the entire range
+        
+        err = cmd->setMemoryDescriptor(memDesc);
+        
+        if (kIOReturnSuccess != err) {
+            
+            IOLog("setMemoryDescriptor failed (0x%08x)\n", err);
+            
+            break;
+            
+        }
+        
+        
+        
+        UInt64 offset = 0;
+        
+        while ((kIOReturnSuccess == err) && (offset < memDesc->getLength())) {
+            
+            // Use the 64 bit variant to match outSegFunc
+            
+            IODMACommand::Segment64 segments[1];
+            
+            UInt32 numSeg = 1;
+            
+            
+            
+            // Use the 64 bit variant to match outSegFunc
+            
+            err = cmd->gen64IOVMSegments(&offset, &segments[0], &numSeg);
+            
+            IOLog("gen64IOVMSegments(%x) addr 0x%016llx, len %llu, nsegs %u \n", err, segments[0].fIOVMAddr, segments[0].fLength, numSeg);
+        }
+        
+        
+        
+        // if we had a DMA controller, kick off the DMA here
+        
+        
+        
+        // when the DMA has completed,
+        
+        
+        
+        // clear the memory descriptor and use the auto complete option
+        
+        // to complete the transaction
+        
+        err = cmd->clearMemoryDescriptor();
+        
+        if (kIOReturnSuccess != err) {
+            
+            IOLog("clearMemoryDescriptor failed (0x%08x)\n", err);
+            
+        }
+        
+    } while (false);
+    
+    
+    
+    if (cmd != NULL) {
+        
+        cmd->release();
+        
+    }
+    
+    // end 64 bit loop
+    
+    
+    
+    
+    
+    // 32 bit physical address generation using IODMACommand
+    
+    // any memory above 4GiB in the memory descriptor will be bounce-buffered
+    
+    // to memory below the 4GiB line on machines without remapping HW support
+    
+    do
+        
+    {
+        
+        cmd = IODMACommand::withSpecification(
+                                              
+                                              // outSegFunc - Host endian since we read the address data with the cpu
+                                              
+                                              // and 32 bit wide quantities
+                                              
+                                              kIODMACommandOutputHost32,
+                                              
+                                              // numAddressBits
+                                              
+                                              32,
+                                              
+                                              // maxSegmentSize - zero for unrestricted physically contiguous chunks
+                                              
+                                              0,
+                                              
+                                              // mappingOptions - kMapped for DMA addresses
+                                              
+                                              IODMACommand::kMapped,
+                                              
+                                              // maxTransferSize - no restriction
+                                              
+                                              0,
+                                              
+                                              // alignment - no restriction
+                                              
+                                              1 );
+        
+        if (cmd == NULL) {
+            
+            IOLog("IODMACommand::withSpecification failed\n");
+            
+            break;
+            
+        }
+        
+        
+        
+        // point at the memory descriptor and use the auto prepare option
+        
+        // to prepare the entire range
+        
+        err = cmd->setMemoryDescriptor(memDesc);
+        
+        if (kIOReturnSuccess != err) {
+            
+            IOLog("setMemoryDescriptor failed (0x%08x)\n", err);
+            
+            break;
+            
+        }
+        
+        
+        
+        UInt64 offset = 0;
+        
+        while ((kIOReturnSuccess == err) && (offset < memDesc->getLength())) {
+            
+            // use the 32 bit variant to match outSegFunc
+            
+            IODMACommand::Segment32 segments[1];
+            
+            UInt32 numSeg = 1;
+            
+            
+            
+            // use the 32 bit variant to match outSegFunc
+            
+            err = cmd->gen32IOVMSegments(&offset, &segments[0], &numSeg);
+            
+            IOLog("gen32IOVMSegments(%x) addr 0x%08x, len %u, nsegs %u\n",
+                  
+                  err, segments[0].fIOVMAddr, segments[0].fLength, numSeg);
+            
+        }
+        
+        
+        
+        // if we had a DMA controller, kick off the DMA here
+        
+        
+        
+        // when the DMA has completed,
+        
+        
+        
+        // clear the memory descriptor and use the auto complete option
+        
+        // to complete the transaction
+        
+        err = cmd->clearMemoryDescriptor();
+        
+        if (kIOReturnSuccess != err) {
+            
+            IOLog("clearMemoryDescriptor failed (0x%08x)\n", err);
+            
+        }
+        
+    } while (false);
+    
+    
+    
+    if (cmd != NULL) {
+        
+        cmd->release();
+        
+    }
+    
+    // end 32 bit loop
+    
+    
+    
+    return err;
+    
 }

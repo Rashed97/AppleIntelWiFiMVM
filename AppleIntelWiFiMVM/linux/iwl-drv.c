@@ -89,6 +89,9 @@
  *
  ******************************************************************************/
 
+#define WAIT_FOR_COMPLETION(){ IOSleep(100);}
+//#define CONFIG_IWLWIFI_DEBUGFS
+
 #if DISABLED_CODE
 #define DRV_DESCRIPTION	"Intel(R) Wireless WiFi driver for MacOS"
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
@@ -125,7 +128,7 @@ struct iwl_drv {
 	int fw_index;                   /* firmware we're trying to load */
 	char firmware_name[32];         /* name of firmware file to load */
 
-	struct completion request_firmware_complete;
+	bool request_firmware_complete;
 
 #ifdef CONFIG_IWLWIFI_DEBUGFS
 	struct dentry *dbgfs_drv;
@@ -1484,7 +1487,8 @@ bool iwl_req_fw_callback(void *raw, size_t len, void *context)
 	 * a driver unbind (stop) doesn't run while we
 	 * are doing the start() above.
 	 */
-	complete(&drv->request_firmware_complete);
+    WAIT_FOR_COMPLETION();
+    drv->request_firmware_complete = true;
 
 	/*
 	 * Load the module last so we don't block anything
@@ -1522,7 +1526,8 @@ bool iwl_req_fw_callback(void *raw, size_t len, void *context)
  out_unbind:
 	FREE(pieces, M_TEMP);
 #if DISABLED_CODE
-	complete(&drv->request_firmware_complete);
+    WAIT_FOR_COMPLETION();
+    drv->request_firmware_complete = true;
 	device_release_driver(drv->trans->dev);
 #endif
     return false;
@@ -1545,7 +1550,8 @@ struct iwl_drv *iwl_drv_start(struct iwl_trans *trans,
 	drv->dev = trans->dev;
 	drv->cfg = cfg;
 
-	init_completion(&drv->request_firmware_complete);
+    WAIT_FOR_COMPLETION();
+    drv->request_firmware_complete = false;
 	INIT_LIST_HEAD(&drv->list);
 
 #ifdef CONFIG_IWLWIFI_DEBUGFS
@@ -1590,8 +1596,10 @@ err:
 
 void iwl_drv_stop(struct iwl_drv *drv)
 {
-	wait_for_completion(&drv->request_firmware_complete);
-
+    WAIT_FOR_COMPLETION();
+    
+    drv->request_firmware_complete = false;
+    
 	_iwl_op_mode_stop(drv);
 
 	iwl_dealloc_ucode(drv);
@@ -1611,6 +1619,8 @@ void iwl_drv_stop(struct iwl_drv *drv)
 #endif
 
 	kfree(drv);
+    
+    
 }
 #endif //DISABLED_CODE
 

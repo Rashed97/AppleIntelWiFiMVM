@@ -692,7 +692,7 @@ struct iwl_trans {
 	const struct iwl_cfg *cfg;
 	enum iwl_trans_state state;
 	unsigned long status;
-
+   
 	struct device *dev;
 	u32 max_skb_frags;
 	u32 hw_rev;

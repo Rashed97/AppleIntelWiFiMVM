@@ -63,6 +63,8 @@
 #ifndef __iwl_fh_h__
 #define __iwl_fh_h__
 
+//#define CONFIG_IWLWIFI_DEBUGFS
+
 #if DISABLED_CODE
 #include <linux/types.h>
 #endif

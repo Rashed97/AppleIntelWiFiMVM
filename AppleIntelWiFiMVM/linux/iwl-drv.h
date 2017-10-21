@@ -62,12 +62,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *****************************************************************************/
 
+//#define CONFIG_IWLWIFI_DEBUGFS
+
 #ifndef __iwl_drv_h__
 #define __iwl_drv_h__
 #if DISABLED_CODE
 #include <linux/export.h>
 #endif
-#include "completion.h"
 #include "iwl-fw.h"
 #include "iwl-fw-file.h"
 
@@ -100,9 +101,7 @@ struct iwl_drv {
     int fw_index;                   /* firmware we're trying to load */
     char firmware_name[32];         /* name of firmware file to load */
 
-//#if DISABLED_CODE
-    struct completion request_firmware_complete;
-//#endif // DISABLED_CODE
+    bool request_firmware_complete;
 
 #ifdef CONFIG_IWLWIFI_DEBUGFS
     struct dentry *dbgfs_drv;
