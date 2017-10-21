@@ -3,6 +3,7 @@
 #include <IOKit/IOBufferMemoryDescriptor.h>
 #include <IOKit/pci/IOPCIDevice.h>
 #include <libkern/OSKextLib.h>
+#include <IOKit/assert.h>
 #include "FirmwareParser.h"
 
 class AppleIntelWiFiMVM : public IOService {

@@ -276,7 +276,7 @@ struct iwl_trans *allocatePCIeTransport(const struct iwl_cfg *cfg, IOPCIDevice *
             NULL, cfg, NULL, 0);  // TODO: passing "device" of NULL, "ops" of NULL vs &trans_ops_pcie
     if (!trans)
         return (struct iwl_trans *) ERR_PTR(-ENOMEM);
-
+    
     trans->max_skb_frags = IWL_PCIE_MAX_FRAGS;
     trans->hw_id = pciDevice->configRead16(kIOPCIConfigDeviceID);
     trans->hw_rev = pciDevice->configRead16(kIOPCIConfigRevisionID);

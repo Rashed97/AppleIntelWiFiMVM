@@ -90,6 +90,8 @@
  ******************************************************************************/
 
 #define WAIT_FOR_COMPLETION(){ IOSleep(100);}
+#define mutex_lock(args...) {IOLockLock(args);}
+#define mutex_unlock(args...) {IOLockFree(args);}
 //#define CONFIG_IWLWIFI_DEBUGFS
 
 #if DISABLED_CODE
@@ -1456,9 +1458,9 @@ bool iwl_req_fw_callback(void *raw, size_t len, void *context)
 			IWL_MAX_STANDARD_PHY_CALIBRATE_TBL_SIZE;
 //#if DISABLED_CODE // TODO: Some of this will need to come back
 	/* We have our copies now, allow OS release its copies */
-	release_firmware(raw);
-
-	mutex_lock(&iwlwifi_opmode_table_mtx);
+	//release_firmware(raw);
+    
+	mutex_lock(iwlwifi_opmode_table_mtx);
 	if (fw->mvm_fw)
 		op = &iwlwifi_opmode_table[MVM_OP_MODE];
 	else
@@ -1474,13 +1476,13 @@ bool iwl_req_fw_callback(void *raw, size_t len, void *context)
 		drv->op_mode = _iwl_op_mode_start(drv, op);
 
 		if (!drv->op_mode) {
-			mutex_unlock(&iwlwifi_opmode_table_mtx);
+			mutex_unlock(iwlwifi_opmode_table_mtx);
 			goto out_unbind;
 		}
 	} else {
 		load_module = true;
 	}
-	mutex_unlock(&iwlwifi_opmode_table_mtx);
+	mutex_unlock(iwlwifi_opmode_table_mtx);
 
 	/*
 	 * Complete the firmware request last so that
@@ -1495,6 +1497,7 @@ bool iwl_req_fw_callback(void *raw, size_t len, void *context)
 	 * else from proceeding if the module fails to load
 	 * or hangs loading.
 	 */
+#ifdef DISABLED_CODE
 	if (load_module) {
 		err = request_module("%s", op->name);
 #ifdef CONFIG_IWLWIFI_OPMODE_MODULAR
@@ -1503,7 +1506,9 @@ bool iwl_req_fw_callback(void *raw, size_t len, void *context)
 				"failed to load module %s (error %d), is dynamic loading enabled?\n",
 				op->name, err);
 #endif
-	}
+}
+#endif //DISABLED_CODE
+	
 //#endif // DISABLED_CODE
     FREE(pieces, M_TEMP);
 	return true;
