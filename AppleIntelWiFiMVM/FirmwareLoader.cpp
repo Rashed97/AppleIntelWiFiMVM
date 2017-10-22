@@ -5,25 +5,28 @@
 //
 #include "AppleIntelWiFiMVM.h"
 
+#define DEBUG_SLEEP 1000
+#define AlwaysLog(args...) do {IOLog(MYNAME": " args); IOSleep(DEBUG_SLEEP);}while(0)
+
 // static
 void AppleIntelWiFiMVM::firmwareLoadComplete( OSKextRequestTag requestTag, OSReturn result, const void *resourceData, uint32_t resourceDataLength, void *context) {
-    DEBUGLOG("Received firmware load callback...\n");
+    AlwaysLog("Received firmware load callback...\n");
     FirmwareLoadProgress *progress = (FirmwareLoadProgress *)context;
-    DEBUGLOG("Attempting firmware lock to prepare data\n");
+    AlwaysLog("Attempting firmware lock to prepare data\n");
     IOLockLock(progress->driver->firmwareLoadLock);
     if(result == kOSReturnSuccess) {
         progress->firmwareData = OSData::withBytes(resourceData, resourceDataLength);
     } else
         IOLog("%s firmwareLoadComplete FAILURE: %08x.\n", MYNAME, result);
-    DEBUGLOG("Releasing firmware lock\n");
+    AlwaysLog("Releasing firmware lock\n");
     IOLockUnlock(progress->driver->firmwareLoadLock);
-    DEBUGLOG("Waking sleepers...\n");
+    AlwaysLog("Waking sleepers...\n");
     IOLockWakeup(progress->driver->firmwareLoadLock, progress->driver, true);
-    DEBUGLOG("Callback complete\n");
+    AlwaysLog("Callback complete\n");
 }
 
 OSData* AppleIntelWiFiMVM::loadFirmwareSync(struct iwl_drv *drv) {
-    DEBUGLOG("Loading firmware\n");
+    AlwaysLog("loadFirmwareSync");
     const char *name_pre = drv->cfg->fw_name_pre;
     char tag[8];
     
@@ -46,53 +49,49 @@ OSData* AppleIntelWiFiMVM::loadFirmwareSync(struct iwl_drv *drv) {
             snprintf(drv->firmware_name, sizeof(drv->firmware_name), "%s%s.ucode",
                      name_pre, tag);
         }
-        kprintf("%s::Requesting firmware load for [%s]...\n", MYNAME, drv->firmware_name);
         
-        IOLog("%s::Requesting firmware load for [%s]...\n", MYNAME, drv->firmware_name);
+        AlwaysLog("%s::Requesting firmware load for [%s]...\n", MYNAME, drv->firmware_name);
         OSReturn ret = OSKextRequestResource(OSKextGetCurrentIdentifier(),
                                              drv->firmware_name,
                                              firmwareLoadComplete,
                                              &progress,
                                              NULL);
         if(ret != kOSReturnSuccess) {
-            IOLog("%s Unable to load firmware file %08x\n", MYNAME, ret);
+            AlwaysLog("%s Unable to load firmware file %08x\n", MYNAME, ret);
             IOLockUnlock(firmwareLoadLock);
             return NULL;
         }
-        kprintf("%s::Waiting for firmware load...\n",MYNAME);
-        DEBUGLOG(" Waiting for firmware load...\n");
+        AlwaysLog("Waiting for firmware load...\n");
         IOLockSleep(firmwareLoadLock, this, THREAD_INTERRUPTIBLE);
-        DEBUGLOG(" Woke up after waiting for firmware lock...\n");
+        AlwaysLog("Woke up after waiting for firmware lock...\n");
         if(progress.firmwareData) break;
         if(--drv->fw_index < drv->cfg->ucode_api_min) break;
         if(drv->fw_index < 0) break;
     }
     IOLockUnlock(firmwareLoadLock);
 
-    kprintf("%s::%s firmware file %s\n", MYNAME,progress.firmwareData ? "LOADED" : "FAILED", drv->firmware_name);
-
-    IOLog("%s::%s firmware file %s\n", MYNAME, progress.firmwareData ? "LOADED" : "FAILED", drv->firmware_name);
+    AlwaysLog("%s::%s firmware file %s\n", MYNAME, progress.firmwareData ? "LOADED" : "FAILED", drv->firmware_name);
     
     return progress.firmwareData;
 }
 
 bool AppleIntelWiFiMVM::startupLoadFirmware() {
-    IOLog("%s Attempting to load Firmware...\n", MYNAME);
+    AlwaysLog("Attempting to load Firmware...\n");
 
     OSData *fwData = loadFirmwareSync(driver);
     if(!fwData)
         return false;
 
     parser = new FirmwareParser();
-    IOLog("%s Attempting to parse Firmware...\n", MYNAME);
+    AlwaysLog("Attempting to parse Firmware...\n");
     bool result = parser->processFirmwareData(fwData, driver);
     if(result) {
-        IOLog("%s Parsed firmware!\n", MYNAME);
+        AlwaysLog("%s Parsed firmware!\n", MYNAME);
         IOLockLock(firmwareLoadLock);
         firmwareLoaded = true;
         IOLockUnlock(firmwareLoadLock);
     }
-    else IOLog("%s Firmware parse failed :(\n", MYNAME);
+    else AlwaysLog("%s Firmware parse failed :(\n", MYNAME);
     RELEASE(fwData)
 
     return result;
@@ -113,9 +112,9 @@ void AppleIntelWiFiMVM::shutdownStopFirmware() {
     //    wait_for_completion(&drv->request_firmware_complete);
     IOLockLock(firmwareLoadLock);
     if(!firmwareLoaded) {
-        IOLog("%s Stopping before firmware is loaded: waiting\n", MYNAME);
+        AlwaysLog("%s Stopping before firmware is loaded: waiting\n", MYNAME);
         IOLockSleep(firmwareLoadLock, this, THREAD_INTERRUPTIBLE);
-        IOLog("%s Load complete; now stopping\n", MYNAME);
+        AlwaysLog("%s Load complete; now stopping\n", MYNAME);
     }
     IOLockUnlock(firmwareLoadLock);
     

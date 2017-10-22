@@ -5,6 +5,11 @@
 #include <libkern/OSKextLib.h>
 #include <IOKit/assert.h>
 #include "FirmwareParser.h"
+#include <kern/task.h>
+
+#define DEBUG_SLEEP 1000
+#define AlwaysLog(args...) do {IOLog(MYNAME": " args); IOSleep(DEBUG_SLEEP);}while(0)
+#define WAIT_FOR_COMPLETION(){ IOSleep(100);}
 
 class AppleIntelWiFiMVM : public IOService {
     OSDeclareDefaultStructors(AppleIntelWiFiMVM);
@@ -18,7 +23,7 @@ public:
     virtual void free() override;
 
     //virtual IOPCIDevice* getPCIDevice(){ return pciDevice;};
-    virtual struct iwl_trans *allocatePCIeTransport(const struct iwl_cfg *cfg, IOPCIDevice *pciDevice);
+    
     
     IOReturn generateDMAAddresses(IOMemoryDescriptor* memDesc);
 private:
@@ -36,7 +41,7 @@ private:
     OSData* loadFirmwareSync(struct iwl_drv *drv);
     static void firmwareLoadComplete( OSKextRequestTag requestTag, OSReturn result, const void *resourceData, uint32_t resourceDataLength, void *context);
     
-    
+    struct iwl_trans *allocatePCIeTransport(const struct iwl_cfg *cfg, IOPCIDevice *pciDevice);
     
     // --------------- Structs ---------------
     struct FirmwareLoadProgress {
@@ -55,5 +60,5 @@ private:
 };
 
 #define MYNAME "AppleIntelWiFiMVM"
-#define DEBUGLOG(args...) IOLog("%s::%s",MYNAME, args); kprintf("%s::%s" ,MYNAME, args)
+#define DEBUGLOG(args...) IOLog("%s::%s",MYNAME, args);
 #define	RELEASE(x)	if(x){(x)->release();(x)=NULL;}

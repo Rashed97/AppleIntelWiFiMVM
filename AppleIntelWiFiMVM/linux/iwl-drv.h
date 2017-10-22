@@ -89,7 +89,7 @@ bool iwl_req_fw_callback(void *raw, size_t len, void *context);
  */
 struct iwl_drv {
 //#if DISABLED_CODE
-    struct list_head list;
+    struct queue_entry list;
 //#endif // DISABLED_CODE
     struct iwl_fw fw;
 
