@@ -83,20 +83,15 @@
 #include <IOKit/IOLocks.h>
 #include <sys/malloc.h>
 
-#include <kern/queue.h>
-
 /******************************************************************************
  *
  * module boiler plate
  *
  ******************************************************************************/
-#define MYNAME "AppleIntelWiFiMVM:iwl-drv.c"
-#define DEBUG_SLEEP 1000
-#define AlwaysLog(args...) do {IOLog(MYNAME": " args); IOSleep(DEBUG_SLEEP);}while(0)
+
 #define WAIT_FOR_COMPLETION(){ IOSleep(100);}
 #define mutex_lock(args...) {IOLockLock(args);}
 #define mutex_unlock(args...) {IOLockFree(args);}
-#define list_add_tail(args...) {enqueue_tail(args);}
 //#define CONFIG_IWLWIFI_DEBUGFS
 
 #if DISABLED_CODE
@@ -110,18 +105,52 @@ MODULE_LICENSE("GPL");
 static struct dentry *iwl_dbgfs_root;
 #endif
 
+#if DISABLED_CODE // Moving to header file
+/**
+ * struct iwl_drv - drv common data
+ * @list: list of drv structures using this opmode
+ * @fw: the iwl_fw structure
+ * @op_mode: the running op_mode
+ * @trans: transport layer
+ * @dev: for debug prints only
+ * @cfg: configuration struct
+ * @fw_index: firmware revision to try loading
+ * @firmware_name: composite filename of ucode file to load
+ * @request_firmware_complete: the firmware has been obtained from user space
+ */
+struct iwl_drv {
+	struct list_head list;
+	struct iwl_fw fw;
+
+	struct iwl_op_mode *op_mode;
+	struct iwl_trans *trans;
+	struct device *dev;
+	const struct iwl_cfg *cfg;
+
+	int fw_index;                   /* firmware we're trying to load */
+	char firmware_name[32];         /* name of firmware file to load */
+
+	bool request_firmware_complete;
+
+#ifdef CONFIG_IWLWIFI_DEBUGFS
+	struct dentry *dbgfs_drv;
+	struct dentry *dbgfs_trans;
+	struct dentry *dbgfs_op_mode;
+#endif
+};
+#endif // DISABLED_CODE
 enum {
 	DVM_OP_MODE =	0,
 	MVM_OP_MODE =	1,
 };
 
 /* Protects the table contents, i.e. the ops pointer & drv list */
-static IOLock *iwlwifi_opmode_table_mtx;
+static IOLock* iwlwifi_opmode_table_mtx;
 static struct iwlwifi_opmode_table {
 	const char *name;			/* name: iwldvm, iwlmvm, etc */
 	const struct iwl_op_mode_ops *ops;	/* pointer to op_mode ops */
 //#if DISABLED_CODE // Assuming only one for now
-	struct queue_entry drv;		/* list of devices using this op_mode */
+	struct list_head drv;		/* list of devices using this op_mode */
 //b#endif
 } iwlwifi_opmode_table[2] = {		/* ops set when driver is initialized */
 	[DVM_OP_MODE] = { .name = "iwldvm", .ops = NULL },
@@ -1213,7 +1242,6 @@ static void _iwl_op_mode_stop(struct iwl_drv *drv)
  */
 bool iwl_req_fw_callback(void *raw, size_t len, void *context)
 {
-    AlwaysLog("iwl_req_fw_callback");
 	struct iwl_drv *drv = context;
 	struct iwl_fw *fw = &drv->fw;
 #if DISABLED_CODE // Only for DVM firmware
@@ -1432,39 +1460,28 @@ bool iwl_req_fw_callback(void *raw, size_t len, void *context)
 	/* We have our copies now, allow OS release its copies */
 	//release_firmware(raw);
     
-    iwlwifi_opmode_table_mtx = IOLockAlloc();
-    AlwaysLog("IOLock Allocated!");
-    
-    AlwaysLog("Setting and locking opmodes");
 	mutex_lock(iwlwifi_opmode_table_mtx);
-    AlwaysLog("Locked opmodes");
-    if (fw->mvm_fw){
-        AlwaysLog("Loading MVM op mode");
+	if (fw->mvm_fw)
 		op = &iwlwifi_opmode_table[MVM_OP_MODE];
-    }else{
-        AlwaysLog("Loading DVM op mode");
+	else
 		op = &iwlwifi_opmode_table[DVM_OP_MODE];
-    }
+
 	IWL_INFO(drv, "loaded firmware version %s op_mode %s\n",
 		 drv->fw.fw_version, op->name);
 
 	/* add this device to the list of devices using this op_mode */
-    AlwaysLog("Adding to tail of the list");	
-    enqueue_tail(&drv->list, &op->drv);
-    AlwaysLog("Added to the tail of the list");
+	list_add_tail(&drv->list, &op->drv);
+
 	if (op->ops) {
-        AlwaysLog("Starting op mode");
 		drv->op_mode = _iwl_op_mode_start(drv, op);
 
 		if (!drv->op_mode) {
-            AlwaysLog("Unlocking mutex after started op mode");
 			mutex_unlock(iwlwifi_opmode_table_mtx);
 			goto out_unbind;
 		}
 	} else {
 		load_module = true;
 	}
-    AlwaysLog("Unlocking mutex");
 	mutex_unlock(iwlwifi_opmode_table_mtx);
 
 	/*
@@ -1474,7 +1491,7 @@ bool iwl_req_fw_callback(void *raw, size_t len, void *context)
 	 */
     WAIT_FOR_COMPLETION();
     drv->request_firmware_complete = true;
-    AlwaysLog("Completing firmware request...");
+
 	/*
 	 * Load the module last so we don't block anything
 	 * else from proceeding if the module fails to load

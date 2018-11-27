@@ -15,8 +15,6 @@
 		1B0B3A941F9A17E80088B9AC /* iwlwifi-8000C-31.ucode in Resources */ = {isa = PBXBuildFile; fileRef = 1B0B3A8D1F9A17E80088B9AC /* iwlwifi-8000C-31.ucode */; };
 		1B0B3A951F9A17E80088B9AC /* iwlwifi-7265-17.ucode in Resources */ = {isa = PBXBuildFile; fileRef = 1B0B3A8E1F9A17E80088B9AC /* iwlwifi-7265-17.ucode */; };
 		1B0B3A961F9A17E80088B9AC /* iwlwifi-8265-31.ucode in Resources */ = {isa = PBXBuildFile; fileRef = 1B0B3A8F1F9A17E80088B9AC /* iwlwifi-8265-31.ucode */; };
-		1B22E0F31F9B884C006593E9 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B22E0F01F9B8819006593E9 /* IOKit.framework */; };
-		1B22E0F41F9B884F006593E9 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1B22E0F11F9B882A006593E9 /* CoreFoundation.framework */; };
 		843096601C7004920020E454 /* iwl-trans.h in Headers */ = {isa = PBXBuildFile; fileRef = 8430965F1C7004920020E454 /* iwl-trans.h */; };
 		843096631C70CE6F0020E454 /* FirmwareParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 843096611C70CE6F0020E454 /* FirmwareParser.cpp */; };
 		843096641C70CE6F0020E454 /* FirmwareParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 843096621C70CE6F0020E454 /* FirmwareParser.h */; };
@@ -102,9 +100,6 @@
 		1B0B3A8D1F9A17E80088B9AC /* iwlwifi-8000C-31.ucode */ = {isa = PBXFileReference; lastKnownFileType = file; name = "iwlwifi-8000C-31.ucode"; path = "firmware/iwlwifi-8000C-31.ucode"; sourceTree = "<group>"; };
 		1B0B3A8E1F9A17E80088B9AC /* iwlwifi-7265-17.ucode */ = {isa = PBXFileReference; lastKnownFileType = file; name = "iwlwifi-7265-17.ucode"; path = "firmware/iwlwifi-7265-17.ucode"; sourceTree = "<group>"; };
 		1B0B3A8F1F9A17E80088B9AC /* iwlwifi-8265-31.ucode */ = {isa = PBXFileReference; lastKnownFileType = file; name = "iwlwifi-8265-31.ucode"; path = "firmware/iwlwifi-8265-31.ucode"; sourceTree = "<group>"; };
-		1B22E0EF1F9B867D006593E9 /* Kernel.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Kernel.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/Kernel.framework; sourceTree = DEVELOPER_DIR; };
-		1B22E0F01F9B8819006593E9 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/IOKit.framework; sourceTree = DEVELOPER_DIR; };
-		1B22E0F11F9B882A006593E9 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/CoreFoundation.framework; sourceTree = DEVELOPER_DIR; };
 		843096561C6FC3320020E454 /* LICENSE */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
 		843096571C6FC3320020E454 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		8430965F1C7004920020E454 /* iwl-trans.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "iwl-trans.h"; path = "linux/iwl-trans.h"; sourceTree = "<group>"; };
@@ -231,24 +226,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1B22E0F31F9B884C006593E9 /* IOKit.framework in Frameworks */,
-				1B22E0F41F9B884F006593E9 /* CoreFoundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		1B22E0EE1F9B8657006593E9 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				1B22E0F11F9B882A006593E9 /* CoreFoundation.framework */,
-				1B22E0F01F9B8819006593E9 /* IOKit.framework */,
-				1B22E0EF1F9B867D006593E9 /* Kernel.framework */,
-			);
-			path = Frameworks;
-			sourceTree = "<group>";
-		};
 		1B43F07E1F9B311F00A278FE /* porting */ = {
 			isa = PBXGroup;
 			children = (
@@ -344,7 +327,6 @@
 		84C01A001C6C1F4100408046 /* AppleIntelWiFiMVM */ = {
 			isa = PBXGroup;
 			children = (
-				1B22E0EE1F9B8657006593E9 /* Frameworks */,
 				84C01A051C6C1F4100408046 /* Info.plist */,
 				847F26C61C6EA0A90007A5B0 /* Firmware */,
 				846A8A641C6CB54700888583 /* linux */,
@@ -660,11 +642,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = AppleIntelWiFiMVM/Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
-				MODULE_NAME = org.opentools.AppleIntelWiFiMVM;
-				MODULE_START = 0;
-				MODULE_STOP = 0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				PRIVATE_HEADERS_FOLDER_PATH = "$(KEXT_FRAMEWORK)/Contents/PrivateHeaders/$(KEXT_FAMILY_NAME)";
@@ -715,11 +693,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = AppleIntelWiFiMVM/Info.plist;
 				MACOSX_DEPLOYMENT_TARGET = 10.12;
-				MODULE_NAME = org.opentools.AppleIntelWiFiMVM;
-				MODULE_START = 0;
-				MODULE_STOP = 0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				PRIVATE_HEADERS_FOLDER_PATH = "$(KEXT_FRAMEWORK)/Contents/PrivateHeaders/$(KEXT_FAMILY_NAME)";
 				PRODUCT_NAME = AppleIntelWiFiMVM;
